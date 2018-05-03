@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="/course/cs1951k/pub/sats/sats-0.6.0.jar"/>
+	<classpathentry kind="lib" path="/gpfs/main/course/cs1951k/pub/trading_platform/tradingplatform_5_2.jar"/>
+	<classpathentry kind="lib" path="/gpfs/main/course/cs1951k/pub/trading_platform/commons-math3-3.6.1.jar"/>
+	<classpathentry kind="lib" path="/gpfs/main/course/cs1951k/pub/trading_platform/kryonet-2.21-all.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
