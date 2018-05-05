@@ -33,4 +33,43 @@ public class Region {
 		return items.get(ind);
 	}
 	
+	public Integer getCheapSwap(Integer i) {
+		if (i == 0) {
+			return 1;
+		}
+		if (i == 1) {
+			return 0;
+		}
+		return (r.nextInt(2));
+	}
+	
+	public Integer getExpensiveSwap(Integer i) {
+		if (i == 2) {
+			return 3;
+		}
+		if (i == 3) {
+			return 2;
+		}
+		return (r.nextInt(2)) + 2;
+	}
+	
+	public Integer getMediumSwap(Integer i) {
+		Integer newItem = r.nextInt(3) + 4;
+		if (newItem == i) {
+			return (newItem - 3 % 3) + 4;
+		}
+		return newItem;
+	}
+	
+	public Integer getBestDeal(double[] prices) {
+		Integer minItem = 0;
+		double minPrice = Double.MAX_VALUE;
+		for (int i = 0; i < items.size(); i++) {
+			if ((item_vals.get(i) - prices[items.get(i)]) < minPrice) {
+				minItem = items.get(i);
+			}
+		}
+		return minItem;
+	}
+	
 }

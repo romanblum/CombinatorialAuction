@@ -18,6 +18,7 @@ public class CombAuctionAgent extends AbsCombinatorialProjectAgentV2 {
 	
 	Bundle alloc;
 	SortedSet<DemandedItem> shared;
+	double prices[] = new double[98];
 	
 	public CombAuctionAgent(String host, int port)
 			throws AgentCreationException {
@@ -177,6 +178,7 @@ public class CombAuctionAgent extends AbsCombinatorialProjectAgentV2 {
 
 	@Override
 	public void onBidResults(double[] demand) {
+		prices = this.getPrices();
 		Set<Integer> allocated_goods = new HashSet<Integer>();
 		shared.clear();
 		for (int i = 0; i < 98; i++) {
@@ -193,8 +195,18 @@ public class CombAuctionAgent extends AbsCombinatorialProjectAgentV2 {
 
 	@Override
 	public Set<Integer> onBidRound() {
-		// TODO Auto-generated method stub
-		return null;
+		long startT = System.currentTimeMillis();
+		// things that might be worth doing:
+			// we can acquire goods with less demand (that we previous bid on by)
+			// Set<Integer> goods = shared.tailSet(new DemandedItem(-1, demand));
+		// initialize bids we want to consider - this should be fast
+		SortedSet<Bundle> possibleBids = new TreeSet<Bundle>();
+		// iterate on other skeletons and add them to possible bids
+		while (System.currentTimeMillis() - startT < 1750) {
+			// do iteration
+		}
+		
+		return possibleBids.last().bundle;
 	}
 	
 	public static void main(String[] args) {
