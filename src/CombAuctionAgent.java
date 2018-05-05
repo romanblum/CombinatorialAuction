@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -53,12 +54,32 @@ public class CombAuctionAgent extends AbsCombinatorialProjectAgentV2 {
 			regions.add(new Region(region_items, region_vals, this.queryValue(new HashSet<Integer>(region_items))));
 		}
 		
-		Map<Set<Integer>, Double> skeletonDiff = new HashMap<Set<Integer>, Double>();
-		PriorityQueue<<Set<Integer>, Double> bestSkeletons = new PriorityQueue<<Set<Integer>, Double>>();
+		Map<Set<Integer>, Double> bestSkeletons = new HashMap<Set<Integer>, Double>();
+		PriorityQueue<Bundle> skeletonQueue = new PriorityQueue<Bundle>(1000, Collections.reverseOrder());
 		
+		Map<Set<Integer>, Double> every14 = new HashMap<Set<Integer>, Double>();
+		
+		for (int i = 0; i < 7; i++) {
+			Set<Integer> initialSet = new HashSet<Integer>();
+			for (int j = 0; j < 14; j++) {
+				initialSet.add(14*i + j);
+			}
+			double value = this.queryValue(initialSet);
 			
-		
-		// fixed
+			
+			double sumSamples = 0;
+			
+			for (int j = 0; j<100; j++){
+				sumSamples += this.sampleValue(initialSet);
+			}
+			
+			double mean = sumSamples/100;
+			double initialDiff = value - mean;
+			
+			
+			Bundle initial = new Bundle(initialSet, value, initialDiff);
+			skeletonQueue.add(initial);
+		}
 		
 		while ((System.currentTimeMillis() - tStart)/1000 < 15) {
 			// generate one random skeleton 
@@ -79,17 +100,17 @@ public class CombAuctionAgent extends AbsCombinatorialProjectAgentV2 {
 			
 			double meanSampleValue = sumSampleValues/100;
 			double difference = setValue - meanSampleValue;
-			
-			skeletonDiff.put(set, difference);
-			
-			
+			Bundle current = new Bundle(set, setValue, meanSampleValue);
+			skeletonQueue.add(current);
 		}
-		
-//		while ((System.currentTimeMillis() - tStart)/1000 < 19) {
-//			sorting in here
-//			
-//			or just keep a priority queue or something in the above
-//		}
+		int counter = 0;
+		while ((System.currentTimeMillis() - tStart)/1000 < 19 && counter<40) {
+			for (int i = 0; i<40; i++){
+				Bundle currentBest = skeletonQueue.poll();
+				bestSkeletons.put(currentBest.getBundle(), currentBest.getValue());
+				counter++;
+			}
+		}
 //		*/
 
 		/*
