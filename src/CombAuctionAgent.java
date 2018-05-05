@@ -254,7 +254,7 @@ public class CombAuctionAgent extends AbsCombinatorialProjectAgentV2 {
 			// do iteration
 		}
 		
-		return possibleBids.last().bundle;
+		return (possibleBids.last().getValue()-possibleBids.last().getPrice()) < 0 ? new HashSet<Integer>() : possibleBids.last().getBundle();
 	}
 	
 	public static void main(String[] args) {
