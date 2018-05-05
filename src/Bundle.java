@@ -25,5 +25,17 @@ public class Bundle implements Comparable<Bundle> {
 		return (int) (this.bundle_val - this.bundle_price - (o.bundle_val - o.bundle_price));
 	}
 	
+	public Set<Integer> getBundle(){
+		return this.bundle;
+	}
+	
+	public double getValue(){
+		return this.bundle_val;
+	}
+	
+	public double getPrice(){
+		return this.bundle_price;
+	}
+	
 	
 }
