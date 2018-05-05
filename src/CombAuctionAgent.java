@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -9,11 +10,14 @@ import brown.exceptions.AgentCreationException;
 
 
 public class CombAuctionAgent extends AbsCombinatorialProjectAgentV2 {
-
+	
+	ArrayList<Region> regions;
+	Set<Set<Integer>> skeletons;
+	
 	public CombAuctionAgent(String host, int port)
 			throws AgentCreationException {
 		super(host, port);
-		// TODO Auto-generated constructor stub
+		regions = new ArrayList<Region>(14);
 	}
 
 	@Override
@@ -59,27 +63,87 @@ public class CombAuctionAgent extends AbsCombinatorialProjectAgentV2 {
 		System.out.println(max);
 		*/
 		
-		Map<Integer, Set<Integer>> every14 = new HashMap<Integer, Set<Integer>>();
-		for (int i = 0; i < 7; i++) {
-			every14.put(i, new HashSet<Integer>());
+		// Initialize regions
+		for (int i = 0; i < 14; i++) {
+			ArrayList<Integer> region_items = new ArrayList<Integer>(7);
+			ArrayList<Double> region_vals = new ArrayList<Double>(7);
+			for (int j = 0; j < 7; j++) {
+				Set<Integer> singleton = new HashSet<Integer>();
+				singleton.add(i + 14*j);
+				region_items.add(i + 14*j);
+				region_vals.add(this.queryValue(singleton)); 
+			}
+			regions.add(new Region(region_items, region_vals, this.queryValue(new HashSet<Integer>(region_items))));
 		}
 		
+		// Fixed chunks
+		Map<Set<Integer>, Double> fixed_sets = new HashMap<Set<Integer>, Double>();
+		/*
+		Set<Integer> one = new HashSet<Integer>();
+		Set<Integer> one_two = new HashSet<Integer>();
+		Set<Integer> two_three = new HashSet<Integer>();
+		Set<Integer> three = new HashSet<Integer>();
+		Set<Integer> two_four = new HashSet<Integer>();
+		*/
 		for (int i = 0; i < 7; i++) {
 			Set<Integer> s = new HashSet<Integer>();
 			for (int j = 0; j < 14; j++) {
-				s.add(14*i + j); 
+				s.add(14*i + j);
 			}
-			every14.put(i,s);
+			fixed_sets.put(s, this.queryValue(s));
+			/*
+			if (i == 0) {
+				one.addAll(s);
+				one_two.addAll(s);
+			}
+			
+			if (i == 1) {
+				one_two.addAll(s);
+				two_three.addAll(s);
+				two_four.addAll(s);
+			}
+			
+			if (i == 2) {
+				three.addAll(s);
+				two_three.addAll(s);
+			}
+			
+			if (i == 3) {
+				two_four.addAll(s);
+			}
+			*/
+		}
+		/*
+		System.out.println("Bundle : " + one.toString() + " Value : " + this.queryValue(one));
+		System.out.println("Bundle : " + one_two.toString() + " Value : " + this.queryValue(one_two));
+		System.out.println("Bundle : " + three.toString() + " Value : " + this.queryValue(three));
+		System.out.println("Bundle : " + two_three.toString() + " Value : " + this.queryValue(two_three));
+		System.out.println("Bundle : " + two_four.toString() + " Value : " + this.queryValue(two_four));
+		*/
+		
+		// Initialize random skeletons
+		Map<Set<Integer>, Double> random_skeletons = new HashMap<Set<Integer>, Double>();
+		for (int i = 0; i < 100; i++) {
+			Set<Integer> s = new HashSet<Integer>();
+			for (int j = 0; j < 14; j++) {
+				s.add(regions.get(j).getRandomItem());
+			}
+			random_skeletons.put(s, this.queryValue(s));
 		}
 		
-		Set<Integer> s = every14.get(2);
-		System.out.println(this.queryValue(s));
-		s.addAll(every14.get(3));
-		System.out.println(this.queryValue(s));
 		
-		for (int i = 0; i < 7; i++) {
-			System.out.println(this.queryValue(every14.get(i)));
-		}
+		
+		
+		System.out.println("FIXED CHUNKS");
+		fixed_sets.forEach((key, value) -> {
+		    System.out.println("Bundle : " + key.toString() + " Value : " + value + " Sample Value : " + this.sampleValue(key) + " Sample Value : " + this.sampleValue(key));
+		});
+		System.out.println("RANDOM 14");
+		random_skeletons.forEach((key, value) -> {
+		    System.out.println("Bundle : " + key.toString() + " Value : " + value + " Sample Value : " + this.sampleValue(key) + " Sample Value : " + this.sampleValue(key));
+		});
+		
+		/*
 		System.out.println("RANDOM SAMPLES");
 		Map<Set<Integer>, Double> m = this.queryXORs(100, 14, 0);
 		Double sum = 0.0;
@@ -90,7 +154,7 @@ public class CombAuctionAgent extends AbsCombinatorialProjectAgentV2 {
 		}
 		System.out.println(sum / 100.0);
 		System.out.println(max);
-		
+		*/
 	}
 
 	@Override
@@ -107,7 +171,7 @@ public class CombAuctionAgent extends AbsCombinatorialProjectAgentV2 {
 	
 	public static void main(String[] args) {
 		try {
-			new CombAuctionAgent("localhost", 2121);
+			new CombAuctionAgent("localhost", 2424);
 			while(true) {
 			}
 		} catch (AgentCreationException e) {
