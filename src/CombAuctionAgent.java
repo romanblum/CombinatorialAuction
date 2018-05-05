@@ -4,6 +4,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.time.*;
 
 import brown.agent.AbsCombinatorialProjectAgentV2;
@@ -15,13 +17,16 @@ public class CombAuctionAgent extends AbsCombinatorialProjectAgentV2 {
 	ArrayList<Region> regions;
 	Set<Set<Integer>> skeletons;
 	
-	Set<Integer> alloc;
-	Set<Integer> shared;
+	Bundle alloc;
+	SortedSet<DemandedItem> shared;
 	
 	public CombAuctionAgent(String host, int port)
 			throws AgentCreationException {
 		super(host, port);
 		regions = new ArrayList<Region>(14);
+		alloc = new Bundle(new HashSet<Integer>(), 0.0, 0.0);
+		shared = new TreeSet<DemandedItem>();
+		
 	}
 
 	@Override
@@ -199,8 +204,18 @@ public class CombAuctionAgent extends AbsCombinatorialProjectAgentV2 {
 
 	@Override
 	public void onBidResults(double[] demand) {
-		// TODO Auto-generated method stub
-		
+		Set<Integer> allocated_goods = new HashSet<Integer>();
+		shared.clear();
+		for (int i = 0; i < 98; i++) {
+			if (demand[i] == 1.0) {
+				allocated_goods.add(i);
+			}
+			
+			if (demand[i] > 0.0) {
+				shared.add(new DemandedItem(i, demand[i]));
+			}
+		}
+		alloc = new Bundle(allocated_goods, this.queryValue(allocated_goods), this.getBundlePrice(allocated_goods));
 	}
 
 	@Override
