@@ -14,6 +14,9 @@ public class CombAuctionAgent extends AbsCombinatorialProjectAgentV2 {
 	ArrayList<Region> regions;
 	Set<Set<Integer>> skeletons;
 	
+	Set<Integer> alloc;
+	Set<Integer> shared;
+	
 	public CombAuctionAgent(String host, int port)
 			throws AgentCreationException {
 		super(host, port);
@@ -30,8 +33,18 @@ public class CombAuctionAgent extends AbsCombinatorialProjectAgentV2 {
 	public void onAuctionStart() {
 		/*long tStart = System.currentTimeMillis();		
 		
+		// fixed
+		
+		while ((System.currentTimeMillis() - tStart)/1000 < 15) {
+			// generate one random skeleton
+			// sample 100 times
+			// compute 
+		}
+		
 		while ((System.currentTimeMillis() - tStart)/1000 < 19) {
+			sorting in here
 			
+			or just keep a priority queue or something in the above
 		}
 		*/
 
@@ -158,7 +171,7 @@ public class CombAuctionAgent extends AbsCombinatorialProjectAgentV2 {
 	}
 
 	@Override
-	public void onBidResults(double[] arg0) {
+	public void onBidResults(double[] demand) {
 		// TODO Auto-generated method stub
 		
 	}
