@@ -2,6 +2,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.PriorityQueue;
 import java.util.Set;
 import java.time.*;
 
@@ -31,22 +32,60 @@ public class CombAuctionAgent extends AbsCombinatorialProjectAgentV2 {
 
 	@Override
 	public void onAuctionStart() {
-		/*long tStart = System.currentTimeMillis();		
+		//Initialize regions
+		
+		long tStart = System.currentTimeMillis();	
+		
+		for (int i = 0; i < 14; i++) {
+			ArrayList<Integer> region_items = new ArrayList<Integer>(7);
+			ArrayList<Double> region_vals = new ArrayList<Double>(7);
+			for (int j = 0; j < 7; j++) {
+				Set<Integer> singleton = new HashSet<Integer>();
+				singleton.add(i + 14*j);
+				region_items.add(i + 14*j);
+				region_vals.add(this.queryValue(singleton)); 
+			}
+			regions.add(new Region(region_items, region_vals, this.queryValue(new HashSet<Integer>(region_items))));
+		}
+		
+		Map<Set<Integer>, Double> skeletonDiff = new HashMap<Set<Integer>, Double>();
+		PriorityQueue<<Set<Integer>, Double> bestSkeletons = new PriorityQueue<<Set<Integer>, Double>>();
+		
+			
 		
 		// fixed
 		
 		while ((System.currentTimeMillis() - tStart)/1000 < 15) {
-			// generate one random skeleton
-			// sample 100 times
-			// compute 
+			// generate one random skeleton 
+			Set<Integer> set = new HashSet<Integer>();
+			for (int j = 0; j < 14; j++) {
+				set.add(regions.get(j).getRandomItem());
+			}
+			
+			double setValue = this.queryValue(set);
+			
+			//sample 100 times
+			
+			double sumSampleValues = 0;
+			
+			for (int i = 0; i< 100; i++){
+				sumSampleValues += this.sampleValue(set);
+			}
+			
+			double meanSampleValue = sumSampleValues/100;
+			double difference = setValue - meanSampleValue;
+			
+			skeletonDiff.put(set, difference);
+			
+			
 		}
 		
-		while ((System.currentTimeMillis() - tStart)/1000 < 19) {
-			sorting in here
-			
-			or just keep a priority queue or something in the above
-		}
-		*/
+//		while ((System.currentTimeMillis() - tStart)/1000 < 19) {
+//			sorting in here
+//			
+//			or just keep a priority queue or something in the above
+//		}
+//		*/
 
 		/*
 		Map<Integer, Set<Integer>> modulo14 = new HashMap<Integer, Set<Integer>>();
@@ -76,18 +115,6 @@ public class CombAuctionAgent extends AbsCombinatorialProjectAgentV2 {
 		System.out.println(max);
 		*/
 		
-		// Initialize regions
-		for (int i = 0; i < 14; i++) {
-			ArrayList<Integer> region_items = new ArrayList<Integer>(7);
-			ArrayList<Double> region_vals = new ArrayList<Double>(7);
-			for (int j = 0; j < 7; j++) {
-				Set<Integer> singleton = new HashSet<Integer>();
-				singleton.add(i + 14*j);
-				region_items.add(i + 14*j);
-				region_vals.add(this.queryValue(singleton)); 
-			}
-			regions.add(new Region(region_items, region_vals, this.queryValue(new HashSet<Integer>(region_items))));
-		}
 		
 		// Fixed chunks
 		Map<Set<Integer>, Double> fixed_sets = new HashMap<Set<Integer>, Double>();
