@@ -11,6 +11,14 @@ public class Bundle implements Comparable<Bundle> {
 		this.bundle_val = bundle_val;
 		this.bundle_price = bundle_price;
 	}
+	
+	public void updatePrice(double price) {
+		this.bundle_price = price;
+	}
+	
+	public void updatePrice(double[] prices) {
+		bundle_price = bundle.stream().mapToDouble(x -> prices[x]).sum();
+	}
 
 	@Override
 	public int compareTo(Bundle o) {
