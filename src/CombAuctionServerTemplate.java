@@ -9,6 +9,7 @@ public class CombAuctionServerTemplate {
   private static String file = null; //if you want to write results to somewhere
 
   public static void main(String[] args) throws InterruptedException {
+
     CombAuctionServer server = new CombAuctionServer(initDelay, initLag, lag, 2424, nSims, increment, file);
     server.runAll();
   }
