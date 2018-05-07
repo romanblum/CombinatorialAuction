@@ -72,19 +72,24 @@ public class CombAuctionAgent extends AbsCombinatorialProjectAgentV2 {
 
 	@Override
 	public void onAuctionEnd(Set<Integer> end_goods) {
+		//Data Per Round
 		System.out.println("Goods Bought " + end_goods.toString());
 		System.out.println("Price Paid: " + this.getBundlePrice(end_goods));
 		System.out.println("Bundle Value: " + this.queryValue(end_goods));
 		System.out.println("Auction Utility: " + (int)(this.queryValue(end_goods)-this.getBundlePrice(end_goods)));
 		System.out.println("Number of Rounds: " + roundCount);
 		totalUtility += (this.queryValue(end_goods)-this.getBundlePrice(end_goods));
-		System.out.println("Total Current Utility: " + totalUtility);
-			
+		System.out.println("Total Current Utility: " + (int)totalUtility);
+		
+		
+		//Clear Round Dependent Data
 		skeletons.clear();
 		last_demand.clear();
 		queries.clear();
 		lastStrongSets.clear();
 		
+		
+		//File Writing for Data Testing
 		BufferedWriter bw = null;
 		FileWriter fw = null;
 
@@ -197,19 +202,18 @@ public class CombAuctionAgent extends AbsCombinatorialProjectAgentV2 {
 		bidderType = bidderType < 0 ? 0.0 : bidderType > 1 ? 1.0 : bidderType;
 		initializeSwapProbs();
 		System.out.println("Begin Bidding:");
-		/*
-		Set<Integer> itemSet = new HashSet<Integer>();
-		for(Bundle bundle: bestBundles){
-			itemSet.addAll(bundle.getBundle());
-		}
-		*/
+
 	}
 
 	@Override
 	public void onBidResults(double[] demand) {
+		
+		//get prices
 		prices = this.getPrices();
 		Set<Integer> allocated_goods = new HashSet<Integer>();
-
+		
+		
+		//look for shared demanded items after clearing
 		shared.clear();
 		for (int i = 0; i < 98; i++) {
 			if (demand[i] == 1.0) {
@@ -219,8 +223,11 @@ public class CombAuctionAgent extends AbsCombinatorialProjectAgentV2 {
 				shared.add(new DemandedItem(i, demand[i]));
 			}
 		}
+		
+		//create allocation bundle
 		alloc = new Bundle(allocated_goods, queries.computeIfAbsent(allocated_goods, k->this.queryValue(k)), this.getBundlePrice(allocated_goods));
-
+		
+		//update skeleton prices
 		skeletons.forEach(s -> {
 			s.updatePrice(prices);
 		});
@@ -230,16 +237,10 @@ public class CombAuctionAgent extends AbsCombinatorialProjectAgentV2 {
 	public Set<Integer> onBidRound() {
 		long startT = System.currentTimeMillis();
 		roundCount++;
-//		if (firstRound) {
-//			Set<Integer> allGoods = new HashSet<Integer>();
-//			for (int i = 0; i < 98; i++) {
-//				allGoods.add(i);
-//			}
-//			return allGoods;
-//		}
 		
 		// Sorted set of possible bids in this round
 		TreeSet<Bundle> possibleBids = new TreeSet<Bundle>(Collections.reverseOrder());
+		
 		// consider currently allocated bundle
 		possibleBids.add(alloc);
 		
@@ -271,9 +272,12 @@ public class CombAuctionAgent extends AbsCombinatorialProjectAgentV2 {
 			
 		}
 		
+		//add skeletons to strong sets
 		lastStrongSets.addAll(skeletons);
 		Iterator<Bundle> iter = lastStrongSets.iterator();
 		Bundle b = new Bundle(iter.next());
+		
+		//search for advantageous item swaps for as long as time allows
 		while (System.currentTimeMillis() - startT < 1750) {
 			double swap_p = r.nextDouble();
 			int num_swap = 0; 
@@ -334,7 +338,6 @@ public class CombAuctionAgent extends AbsCombinatorialProjectAgentV2 {
 			lastStrongSets.add(good_b);
 		}
 		last_demand = (possibleBids.first().getDemandPrice()) < 0 ? new HashSet<Integer>() : possibleBids.first().getBundle();
-//		System.out.println(last_demand.toString());
 		return last_demand;
 	}
 	
@@ -343,6 +346,8 @@ public class CombAuctionAgent extends AbsCombinatorialProjectAgentV2 {
 	}
 	
 	private void initializeSwapProbs() {
+		
+		//probabilities given our bidding type (how high our valuation is)
 		smartProb = .25;
 		cheapProb = .25;
 		midProb = .25;
