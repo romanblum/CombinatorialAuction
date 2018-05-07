@@ -10,7 +10,7 @@ public class CombAuctionServerTemplate {
 
   public static void main(String[] args) throws InterruptedException {
 
-    CombAuctionServer server = new CombAuctionServer(initDelay, initLag, lag, 2424, nSims, increment, file);
+    CombAuctionServer server = new CombAuctionServer(initDelay, initLag, lag, 2121, nSims, increment, file);
     server.runAll();
   }
 }

@@ -355,9 +355,9 @@ public class CombAuctionAgent extends AbsCombinatorialProjectAgentV2 {
 	
 	public static void main(String[] args) {
 		try {
-			new CombAuctionAgent("localhost", 2222);
+			new CombAuctionAgent("localhost", 2121);
 			for (int i = 1; i <= 7; i++) {
-				new T2CombAgent("localhost", 2222, "bot"+i);
+				new T2CombAgent("localhost", 2121, "bot"+i);
 			}
 			while(true) {
 			}
