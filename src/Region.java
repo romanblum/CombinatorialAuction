@@ -7,12 +7,12 @@ public class Region {
 
 	ArrayList<Integer> items;
 	ArrayList<Double> item_vals;
-	double totalVal;
+	Double totalVal;
 	
 	Random r;
 	int region_size;
 	
-	public Region(ArrayList<Integer> items, ArrayList<Double> item_vals, double totalVal) {
+	public Region(ArrayList<Integer> items, ArrayList<Double> item_vals, Double totalVal) {
 		this.items = items;
 		this.item_vals = item_vals;
 		this.totalVal = totalVal; 

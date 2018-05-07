@@ -14,6 +14,7 @@ import java.time.*;
 
 import brown.agent.AbsCombinatorialProjectAgentV2;
 import brown.agent.library.T1CombAgent;
+import brown.agent.library.T2CombAgent;
 import brown.exceptions.AgentCreationException;
 
 
@@ -39,6 +40,8 @@ public class CombAuctionAgent extends AbsCombinatorialProjectAgentV2 {
 	double expProb;
 	double smartProb;
 	
+	boolean firstRound;
+	
 	Random r;
 	
 	public CombAuctionAgent(String host, int port)
@@ -52,6 +55,7 @@ public class CombAuctionAgent extends AbsCombinatorialProjectAgentV2 {
 		last_demand = new HashSet<Integer>();
 		lastStrongSets = new TreeSet<Bundle>(Collections.reverseOrder());
 		r = new Random();
+		firstRound = true;
 		
 		double p = .5;
 		swap_prob[0] = p;
@@ -66,13 +70,19 @@ public class CombAuctionAgent extends AbsCombinatorialProjectAgentV2 {
 		System.out.println(end_goods.toString());
 		System.out.println(this.getBundlePrice(end_goods));
 		System.out.println(this.queryValue(end_goods));
+			
+		skeletons.clear();
+		last_demand.clear();
+		queries.clear();
+		lastStrongSets.clear();
+		firstRound = true;
 	}
 
 	@Override
 	public void onAuctionStart() {
 		//Initialize regions
 		
-		long tStart = System.currentTimeMillis();	
+		long tStart = System.currentTimeMillis();
 		
 		for (int i = 0; i < 14; i++) {
 			ArrayList<Integer> region_items = new ArrayList<Integer>(7);
@@ -83,39 +93,55 @@ public class CombAuctionAgent extends AbsCombinatorialProjectAgentV2 {
 				region_items.add(i + 14*j);
 				region_vals.add(this.queryValue(singleton)); 
 			}
-			regions.add(new Region(region_items, region_vals, this.queryValue(new HashSet<Integer>(region_items))));
+			regions.add(new Region(region_items, region_vals, null));
 		}
 				
-		PriorityQueue<Bundle> skeletonQueue = new PriorityQueue<Bundle>(1000, Collections.reverseOrder());
+		PriorityQueue<Bundle> skeletonQueue = new PriorityQueue<Bundle>(500, Collections.reverseOrder());
 		
-		while ((System.currentTimeMillis() - tStart) < 18300) {
-			// generate one random skeleton 
+		int i = 0;
+		Set<Set<Integer>> batch = new HashSet<Set<Integer>>();
+		while ((System.currentTimeMillis() - tStart) < 17000) {
 			Set<Integer> set = new HashSet<Integer>();
 			for (int j = 0; j < 14; j++) {
 				set.add(regions.get(j).getRandomItem());
 			}
-			
+
 			double setValue = this.queryValue(set);
 			queries.put(set, setValue);
-			//sample 100 times
-			
-			double sumSampleValues = 0;
-			
-			for (int i = 0; i< 3; i++){
-				sumSampleValues += this.sampleValue(set);
+			batch.add(set);
+
+
+			// generate one random skeleton 
+
+			if (i == 40) {
+				Map<Set<Integer>, Double> sampleVals = this.sampleValues(batch);
+				for (int j = 0; i<2; i++){
+					//sumSampleValues += this.sampleValue(set);
+					System.out.println(batch.size());
+					Map<Set<Integer>, Double> sampleVal = this.sampleValues(batch);
+					sampleVal.forEach((bundle, val) -> {
+						sampleVals.compute(bundle, (k,v) -> (v == null) ? val : val+v);
+					});
+				}
+
+				// sampleVals.replaceAll((key, val) -> val/3);
+				
+				batch.forEach(bundle -> {
+					skeletonQueue.add(new Bundle(bundle, queries.get(bundle), sampleVals.get(bundle)));
+				});
+				i = 0;
+				batch.clear();
+			} else {
+				i++;
 			}
-			
-			double meanSampleValue = sumSampleValues/3;
-			Bundle current = new Bundle(set, setValue, meanSampleValue);
-			skeletonQueue.add(current);
 		}
+	
 		int counter = 0;
-		
+		System.out.println(skeletonQueue.size());
 		while ((System.currentTimeMillis() - tStart) < 19300 && counter<10) {
 				Bundle currentBest = skeletonQueue.poll();
 				bidderType += currentBest.getDemandPrice();
 				currentBest.updatePrice(0.0);
-				
 				skeletons.add(currentBest);
 				counter++;
 		}
@@ -134,20 +160,24 @@ public class CombAuctionAgent extends AbsCombinatorialProjectAgentV2 {
 
 	@Override
 	public void onBidResults(double[] demand) {
-		prices = this.getPrices();
-		Set<Integer> allocated_goods = new HashSet<Integer>();
-		
-		shared.clear();
-		for (int i = 0; i < 98; i++) {
-			if (demand[i] == 1.0) {
-				allocated_goods.add(i);
+		if (!firstRound) {
+			prices = this.getPrices();
+			Set<Integer> allocated_goods = new HashSet<Integer>();
+
+			shared.clear();
+			for (int i = 0; i < 98; i++) {
+				if (demand[i] == 1.0) {
+					allocated_goods.add(i);
+				}
+				if (demand[i] > 0.0) {
+					shared.add(new DemandedItem(i, demand[i]));
+				}
 			}
-			if (demand[i] > 0.0) {
-				shared.add(new DemandedItem(i, demand[i]));
-			}
+			alloc = new Bundle(allocated_goods, queries.computeIfAbsent(allocated_goods, k->this.queryValue(k)), this.getBundlePrice(allocated_goods));
+		} else {
+			firstRound = false;
 		}
-		
-		alloc = new Bundle(allocated_goods, queries.computeIfAbsent(allocated_goods, k->this.queryValue(k)), this.getBundlePrice(allocated_goods));
+
 		skeletons.forEach(s -> {
 			s.updatePrice(prices);
 		});
@@ -156,19 +186,29 @@ public class CombAuctionAgent extends AbsCombinatorialProjectAgentV2 {
 	@Override
 	public Set<Integer> onBidRound() {
 		long startT = System.currentTimeMillis();
-		// things that might be worth doing:
-			// we can acquire goods with less demand (that we previous bid on by)
-			// Set<Integer> goods = shared.tailSet(new DemandedItem(-1, demand));
-		// initialize bids we want to consider - this should be fast
+		if (firstRound) {
+			Set<Integer> allGoods = new HashSet<Integer>();
+			for (int i = 0; i < 98; i++) {
+				allGoods.add(i);
+			}
+			return allGoods;
+		}
+		
+		// Sorted set of possible bids in this round
 		TreeSet<Bundle> possibleBids = new TreeSet<Bundle>(Collections.reverseOrder());
+		// consider currently allocated bundle
 		possibleBids.add(alloc);
+		
+		// consider bundle that we bid on last round unioned with currently allocated goods
 		last_demand.addAll(alloc.getBundle());
 		possibleBids.add(new Bundle(last_demand, queries.computeIfAbsent(last_demand,k->this.queryValue(k)), this.getBundlePrice(last_demand)));
+		
+		// for each skeleton consider the bundle unioned with our allocated goods
 		for (Bundle s : skeletons) {
 			Bundle merged = new Bundle(s, alloc);
 			merged.updateValue(queries.computeIfAbsent(merged.getBundle(), k->this.queryValue(k)));
 			merged.updatePrice(this.getBundlePrice(merged.getBundle()));
-			possibleBids.add(merged);
+			possibleBids.add(merged);			
 			
 			Bundle alloc_swapped = new Bundle(s);
 			
@@ -179,23 +219,14 @@ public class CombAuctionAgent extends AbsCombinatorialProjectAgentV2 {
 					alloc_swapped.swap(j.get(), item);
 				}	
 			}
-
+			
+			alloc_swapped.addBundle(alloc);
 			alloc_swapped.updateValue(queries.computeIfAbsent(alloc_swapped.getBundle(), k->this.queryValue(k)));
 			alloc_swapped.updatePrice(this.getBundlePrice(alloc_swapped.getBundle()));
 			possibleBids.add(alloc_swapped);
+			
 		}
 		
-		
-		System.out.println("Skeletons");
-		skeletons.forEach(s -> {
-			System.out.println(s.getBundle().toString());
-		});
-		System.out.println("Last Strong Sets");
-		lastStrongSets.forEach(s -> {
-			System.out.println(s.getBundle().toString());
-		});
-		
-
 		lastStrongSets.addAll(skeletons);
 		Iterator<Bundle> iter = lastStrongSets.iterator();
 		Bundle b = new Bundle(iter.next());
@@ -259,6 +290,7 @@ public class CombAuctionAgent extends AbsCombinatorialProjectAgentV2 {
 			lastStrongSets.add(good_b);
 		}
 		last_demand = (possibleBids.first().getDemandPrice()) < 0 ? new HashSet<Integer>() : possibleBids.first().getBundle();
+		System.out.println(last_demand.toString());
 		return last_demand;
 	}
 	
@@ -267,10 +299,10 @@ public class CombAuctionAgent extends AbsCombinatorialProjectAgentV2 {
 	}
 	
 	private void initializeSwapProbs() {
-		smartProb = .6;
-		cheapProb = (1.0-bidderType)/5;
-		midProb = (1.0 - smartProb+cheapProb)/2;
-		expProb = midProb;
+		smartProb = .25;
+		cheapProb = .25;
+		midProb = .25;
+		expProb = .25;
 		
 		midProb = cheapProb + midProb;
 		expProb = midProb+expProb;
@@ -279,7 +311,10 @@ public class CombAuctionAgent extends AbsCombinatorialProjectAgentV2 {
 	
 	public static void main(String[] args) {
 		try {
-			new CombAuctionAgent("localhost", 2121);
+			new CombAuctionAgent("localhost", 2222);
+			for (int i = 1; i <= 7; i++) {
+				new T2CombAgent("localhost", 2222, "bot"+i);
+			}
 			while(true) {
 			}
 		} catch (AgentCreationException e) {
