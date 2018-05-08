@@ -151,7 +151,7 @@ public class CombAuctionAgent extends AbsCombinatorialProjectAgentV2 {
 		
 		int i = 0;
 		Set<Set<Integer>> batch = new HashSet<Set<Integer>>();
-		while ((System.currentTimeMillis() - tStart) < 15000) {
+		while ((System.currentTimeMillis() - tStart) < 16000) {
 			Set<Integer> set = new HashSet<Integer>();
 			for (int j = 0; j < 14; j++) {
 				set.add(regions.get(j).getRandomItem());
